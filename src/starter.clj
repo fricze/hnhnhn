@@ -5,6 +5,7 @@
             [io.github.humbleui.signal :as signal]
             [io.github.humbleui.paint :as paint]
             [io.github.humbleui.window :as window]
+            [scrollable :as scrollable]
             [clipboard]))
 
 
@@ -70,7 +71,7 @@
   (let [page-no (deref *page)]
     [ui/column {:gap 20}
      [ui/row {:gap 8}
-      (for [i (range 10)]
+      (for [i (range 20)]
         [ui/with-cursor {:cursor :pointing-hand}
          [ui/button
           {:on-click (fn [_]
@@ -89,7 +90,7 @@
     :bottom 80}
    [ui/column {:gap 18}
     [app-state]
-    [pages]
+    [scrollable/hscrollable [pages]]
     [content]]])
 
 
