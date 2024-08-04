@@ -32,17 +32,31 @@
   `(do
      ~@(map (fn [n] `(def ~n 34)) name)))
 
-(accessors ex exxx)
+
 
 (defprotocol ISetX (set-x [this o]))
 
 (defmacro deftype-with-accessors [])
 
-(deftype Test [^:unsynchronized-mutable x]
-  ISetX
-  (set-x [_ o] (set! ex o))
-  #_(set-x [_ o] (set! x o)))
 
+(defprotocol ShareFields
+             (share [_]))
+
+(deftype WithShared [^:unsynchronized-mutable field1 field2 field3]
+  ISetX
+  (set-x [_ o] (set! field1 o))
+  ShareFields
+  (share [_] (accessors field1 field2 field3)))
+
+
+(deftype UseShared []
+  ISetX
+  (set-x [_ o] (set! field1 o)))
+
+
+(WithShared. 13 14 15)
+
+(set-x (UseShared.) 34)
 
 (* ex exxx)
 
