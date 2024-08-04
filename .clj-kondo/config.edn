@@ -1,2 +1,9 @@
 {:lint-as {io.github.humbleui.ui/defcomp clojure.core/defn
-           io.github.humbleui.ui/deflazy clojure.core/defn}}
+           io.github.humbleui.ui/deflazy clojure.core/defn
+           io.github.humbleui.util/defparent clojure.core/deftype
+           io.github.humbleui.util/deftype+ clojure.core/defn
+           scrollable/extends clojure.core/deftype
+           scrollable/with-foo clojure.core/let
+           scrollable/with-fields clojure.core/let}}
+
+

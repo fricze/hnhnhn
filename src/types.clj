@@ -26,11 +26,15 @@
   [& name]
   `(declare ~@name))
 
-(defmacro accessors
+
+(def public-fields (volatile! #{}))
+
+(defmacro make-public
   {:clj-kondo/lint-as 'clojure.core/declare}
   [& name]
   `(do
-     ~@(map (fn [n] `(def ~n 34)) name)))
+     ~@(map (fn [n] (let [unique-val 332]
+                      (vswap! public-fields conj (str *ns* "/" n)) `(def ~n 34))) name)))
 
 
 
@@ -46,13 +50,15 @@
   ISetX
   (set-x [_ o] (set! field1 o))
   ShareFields
-  (share [_] (accessors field1 field2 field3)))
+  (share [_] (make-public field1 field2 field3)))
 
 
 (deftype UseShared []
   ISetX
   (set-x [_ o] (set! field1 o)))
 
+
+@public-fields
 
 (WithShared. 13 14 15)
 
