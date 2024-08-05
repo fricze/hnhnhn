@@ -4,4 +4,5 @@
   http-kit/http-kit {:mvn/version "2.8.0"}
   org.clojure/data.csv {:mvn/version "1.1.0"}
   org.clojure/data.json {:mvn/version "2.5.0"}
+  potemkin/potemkin {:mvn/version "0.4.6"}
   io.github.humbleui/humbleui {:git/sha "ad15accb52f22d089e288b93d45fa3ac3ac4d43a"}}}

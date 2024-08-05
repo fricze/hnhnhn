@@ -6,7 +6,8 @@
             [io.github.humbleui.canvas :as canvas]
             [io.github.humbleui.protocols :as protocols]
             [io.github.humbleui.signal :as signal]
-            [io.github.humbleui.window :as window]))
+            [io.github.humbleui.window :as window]
+            [clojure.walk :as walk]))
 
 
 
@@ -40,6 +41,69 @@
   {:fields    (vec (concat (:fields child) (:fields parent)))
    :protocols (set/union (:protocols parent) (:protocols child))
    :methods   (merge (:methods parent) (:methods child))})
+
+(defrecord Parent [details])
+
+(defmacro def-parent
+  "Defines base “class” that deftype+ can extend from.
+   Supports extra field and protocols which deftype+ can partially override.
+   If calling external functions, use fully-qualified or namespaced symbol"
+  [sym & body]
+  (let [[doc body]    (if (string? (first body)) [(first body) (next body)] ["" body])
+        [fields body] [(first body) (next body)]
+        [parent body] (if (= :extends (first body)) [(second body) (nnext body)] [nil body])
+        protocols     (into (:protocols parent #{})
+                            (->> body (filter symbol?) (map qualify-symbol)))
+        methods       (->> body
+                           (remove symbol?)
+                           (map #(vector (list 'quote (signature %)) (cons 'fn %)))
+                           (into {}))
+        definition    {:fields    (list 'quote fields)
+                       :protocols (list 'quote protocols)
+                       :methods   methods}]
+    `(do
+       (defrecord ~(symbol (str "Rec" sym)) ~(conj fields 'opts)
+         ~@body)
+       (def ~sym (new ~(symbol (str "Rec" sym)) ~@(map (fn [_] :accessor) fields) ~definition)))
+
+    #_(if parent
+        `(def ~sym ~doc
+           (#'merge-parents ~parent ~definition))
+        `(defrecord ~sym ~doc
+           ~definition))))
+
+(macroexpand-1
+ '(def-parent CNode [field1 field2]
+    protocols/IComponent
+    (-context [_ ctx]
+              ctx)))
+
+(def-parent CNode [field1 field2]
+  protocols/IComponent
+  (-context [_ ctx]
+            ctx))
+
+
+(defn replace-parent-fields [form]
+  (clojure.walk/postwalk
+   (fn [x]
+     (if-let [l? (list? x)]
+       (if l?
+         (let [[field rec & body] x
+               [fchar & field-name] (str field)]
+           (if (and (= fchar \.) (= :accessor (eval x)))
+             (symbol (apply str field-name))
+             x))
+         x)
+       x))
+   form))
+
+(replace-parent-fields
+ '(let [x 2
+        y 3
+        z 24]
+    (set! (.field1 CNode) 334)))
+
 
 (defmacro extends
   "Defines base “class” that deftype+ can extend from.
@@ -118,7 +182,7 @@
                      (:height child-size)
                      (:height cs)))))
 
-  (draw-impl [_ ctx bounds viewport canvas]
+  (-draw-impl [_ ctx bounds viewport canvas]
              (set! child-size (protocols/-measure child ctx (util/ipoint (:width bounds) Integer/MAX_VALUE)))
              (set! offset-px (util/clamp
                               (ui/scaled (or @offset 0))
