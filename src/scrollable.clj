@@ -37,10 +37,12 @@
   (let [[sym args & _] method]
     [sym (count args)]))
 
-(defn- merge-parents [parent child]
-  {:fields    (vec (concat (:fields child) (:fields parent)))
+
+(defn- merge-options [parent child]
+  {:fields    (vec (set (concat (:fields child) (:fields parent))))
    :protocols (set/union (:protocols parent) (:protocols child))
    :methods   (merge (:methods parent) (:methods child))})
+
 
 (defrecord Parent [details])
 
@@ -61,10 +63,20 @@
         definition    {:fields    (list 'quote fields)
                        :protocols (list 'quote protocols)
                        :methods   methods}]
-    `(do
-       (defrecord ~(symbol (str "Rec" sym)) ~(conj fields 'opts)
-         ~@body)
-       (def ~sym (new ~(symbol (str "Rec" sym)) ~@(map (fn [_] :accessor) fields) ~definition)))
+    (if parent
+       `(do
+         (defrecord ~(symbol (str "Rec" sym)) ~(conj fields 'opts)
+           ~@body)
+         (def ~sym (new ~(symbol (str "Rec" sym))
+                        ~@(map (fn [_] :accessor) fields)
+                        (#'merge-options (.opts ~parent) ~definition))))
+
+       `(do
+         (defrecord ~(symbol (str "Rec" sym)) ~(conj fields 'opts)
+           ~@body)
+         (def ~sym (new ~(symbol (str "Rec" sym))
+                        ~@(map (fn [_] :accessor) fields)
+                        ~definition))))
 
     #_(if parent
         `(def ~sym ~doc
@@ -72,16 +84,30 @@
         `(defrecord ~sym ~doc
            ~definition))))
 
+(def-parent Wrapper [bounds size]
+  protocols/IComponent
+  (-draw [_ ctx bounds viewport canvas]
+         ctx)
+  (-context [_ ctx]
+            ctx))
+
+
+(.opts Wrapper)
+
 (macroexpand-1
  '(def-parent CNode [field1 field2]
+    :extends Wrapper
     protocols/IComponent
     (-context [_ ctx]
               ctx)))
 
-(def-parent CNode [field1 field2]
+(def-parent CNode [field1 field2 size]
+  :extends Wrapper
   protocols/IComponent
   (-context [_ ctx]
             ctx))
+
+(.opts CNode)
 
 
 (defn replace-parent-fields [form]
@@ -105,7 +131,7 @@
     (set! (.field1 CNode) 334)))
 
 
-(defmacro extends
+#_(defmacro extends
   "Defines base “class” that deftype+ can extend from.
    Supports extra field and protocols which deftype+ can partially override.
    If calling external functions, use fully-qualified or namespaced symbol"
