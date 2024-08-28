@@ -5,9 +5,7 @@
             [io.github.humbleui.signal :as signal]
             [io.github.humbleui.paint :as paint]
             [io.github.humbleui.window :as window]
-            [scrollable :as scrollable]
-            [clipboard]))
-
+            [scrollable :as scrollable]))
 
 
 (defonce *news

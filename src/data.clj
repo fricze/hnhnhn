@@ -1,8 +1,6 @@
 (ns data
-  (:require
-   [clojure.data.json :as json]
-   [org.httpkit.client :as http]
-   #_[clj-http.client :as client]))
+  (:require [clojure.data.json :as json]
+            [org.httpkit.client :as http]))
 
 
 (defn get-news []
