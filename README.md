@@ -1,4 +1,4 @@
-A simple project template using [Humble UI](https://github.com/HumbleUI/HumbleUI/).
+A simple project template using [Humble UI](https://github.com/HumbleUI/HumbleUI/) that shows latest Hacker News.
 
 Start with
 
